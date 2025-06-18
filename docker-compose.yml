@@ -3,8 +3,7 @@
 services:
   photo-annotator:
     build: .
-    ports:
-      - "8001:8001"
+    container_name: photo-annotator
     volumes:
       - ./uploads:/app/uploads
       - ./annotations.csv:/app/annotations.csv
