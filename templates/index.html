@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Furkan's Photo Annotation Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</head>
+<body class="bg-gray-50">
+    <div x-data="photoApp()" class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-white shadow-sm border-b">
+            <div class="max-w-7xl mx-auto px-4 py-6">
+                <h1 class="text-3xl font-bold text-gray-900">Furkan's Photo Annotation Tool</h1>
+                <p class="text-gray-600 mt-2">Upload and annotate your photos with descriptions, tags, and labels</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 py-8">
+            <!-- Upload Section -->
+            <div class="bg-white rounded-lg shadow-sm border p-6 mb-8">
+                <h2 class="text-xl font-semibold mb-4">Upload Photos</h2>
+                
+                <!-- Drop Zone -->
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors"
+                     @dragover.prevent
+                     @drop.prevent="handleDrop($event)">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <div class="mt-4">
+                        <label for="file-upload" class="cursor-pointer">
+                            <span class="mt-2 block text-sm font-medium text-gray-900">
+                                Drop files here or 
+                                <span class="text-blue-600 hover:text-blue-500">browse</span>
+                            </span>
+                            <input id="file-upload" name="file-upload" type="file" class="sr-only" multiple accept="image/*" @change="handleFileSelect($event)">
+                        </label>
+                        <p class="mt-1 text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                    </div>
+                </div>
+
+                <!-- Upload Progress -->
+                <div x-show="uploading" class="mt-4">
+                    <div class="flex items-center">
+                        <div class="flex-1 bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" :style="`width: ${uploadProgress}%`"></div>
+                        </div>
+                        <span class="ml-3 text-sm text-gray-600" x-text="`${uploadProgress}%`"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Photo Grid -->
+            <div class="bg-white rounded-lg shadow-sm border p-6 mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Your Photos</h2>
+                    <div class="flex gap-2">
+                        <button @click="loadImages()" class="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors">
+                            Refresh
+                        </button>
+                        <button @click="exportCSV()" class="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors">
+                            Export CSV
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div x-show="loading" class="text-center py-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                    <p class="mt-2 text-gray-600">Loading photos...</p>
+                </div>
+
+                <!-- Photo Grid -->
+                <div x-show="!loading && images.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                    <template x-for="image in images" :key="image.filename">
+                        <div class="bg-gray-100 rounded-lg overflow-hidden relative group">
+                            <!-- Delete Button -->
+                            <button @click.stop="deleteImage(image)" 
+                                    class="absolute top-2 right-2 z-10 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    title="Delete image">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                            
+                            <!-- Annotated Indicator -->
+                            <div x-show="isImageAnnotated(image.filename)" 
+                                 class="absolute top-2 left-2 z-10 bg-green-500 rounded-full p-1"
+                                 title="This image has been annotated">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            </div>
+                            
+                            <!-- Image Container -->
+                            <div class="aspect-square bg-gray-200 flex items-center justify-center cursor-pointer"
+                                 @click="selectImage(image)">
+                                <img x-show="image.thumbnail" :src="`/uploads/thumbnails/${image.thumbnail ? image.thumbnail.split('/').pop() : ''}`" 
+                                     :alt="image.filename" class="w-full h-full object-cover">
+                                <div x-show="!image.thumbnail" class="text-gray-400">
+                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="p-2">
+                                <p class="text-xs text-gray-600 truncate" x-text="image.filename"></p>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Empty State -->
+                <div x-show="!loading && images.length === 0" class="text-center py-12">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No photos uploaded</h3>
+                    <p class="mt-1 text-sm text-gray-500">Get started by uploading your first photo above.</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Annotation Modal -->
+        <div x-show="selectedImage" 
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+             @click.self="closeModal()">
+            
+            <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+                <!-- Modal Header -->
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Annotate Photo</h3>
+                    <button @click="closeModal()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Image Preview -->
+                <div class="mb-6">
+                    <img x-show="selectedImage" :src="`/uploads/${selectedImage?.filename || ''}`" 
+                         :alt="selectedImage?.filename" class="w-full max-h-64 object-contain rounded-lg bg-gray-100">
+                    <p class="mt-2 text-sm text-gray-600" x-text="selectedImage?.filename"></p>
+                </div>
+
+                <!-- Annotation Form -->
+                <form @submit.prevent="saveAnnotation()">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="description" class="block text-sm font-medium text-gray-700">Description *</label>
+                            <textarea id="description" x-model="annotation.description" rows="3" 
+                                      class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                                      placeholder="Describe what you see in this image..."
+                                      required></textarea>
+                        </div>
+
+                        <div>
+                            <label for="tags" class="block text-sm font-medium text-gray-700">Tags</label>
+                            <input type="text" id="tags" x-model="annotation.tags"
+                                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                                   placeholder="nature, landscape, outdoor (comma-separated)">
+                            <p class="mt-1 text-xs text-gray-500">Separate multiple tags with commas</p>
+                        </div>
+
+                        <div>
+                            <label for="labels" class="block text-sm font-medium text-gray-700">Labels</label>
+                            <input type="text" id="labels" x-model="annotation.labels"
+                                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                                   placeholder="object, person, building (comma-separated)">
+                            <p class="mt-1 text-xs text-gray-500">Separate multiple labels with commas</p>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button type="button" @click="closeModal()" 
+                                class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" :disabled="saving"
+                                class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors disabled:opacity-50">
+                            <span x-show="!saving">Save Annotation</span>
+                            <span x-show="saving">Saving...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div x-show="toast.show" 
+             x-transition:enter="transform ease-out duration-300 transition"
+             x-transition:enter-start="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
+             x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0"
+             x-transition:leave="transition ease-in duration-100"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed bottom-5 right-5 max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden z-50">
+            <div class="p-4">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <svg x-show="toast.type === 'success'" class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <svg x-show="toast.type === 'error'" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div class="ml-3 w-0 flex-1 pt-0.5">
+                        <p class="text-sm font-medium text-gray-900" x-text="toast.title"></p>
+                        <p class="mt-1 text-sm text-gray-500" x-text="toast.message"></p>
+                    </div>
+                    <div class="ml-4 flex-shrink-0 flex">
+                        <button @click="toast.show = false" class="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500">
+                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function photoApp() {
+            return {
+                images: [],
+                annotations: [],
+                selectedImage: null,
+                annotation: {
+                    description: '',
+                    tags: '',
+                    labels: ''
+                },
+                loading: false,
+                uploading: false,
+                saving: false,
+                uploadProgress: 0,
+                toast: {
+                    show: false,
+                    type: 'success',
+                    title: '',
+                    message: ''
+                },
+
+                init() {
+                    this.loadImages();
+                    this.loadAnnotations();
+                },
+
+                async loadImages() {
+                    this.loading = true;
+                    try {
+                        const response = await fetch('/api/images');
+                        const data = await response.json();
+                        this.images = data.images;
+                        await this.loadAnnotations(); // Load annotations after images
+                    } catch (error) {
+                        this.showToast('error', 'Error', 'Failed to load images');
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                async loadAnnotations() {
+                    try {
+                        const response = await fetch('/api/annotations');
+                        const data = await response.json();
+                        this.annotations = data.annotations;
+                    } catch (error) {
+                        console.error('Failed to load annotations:', error);
+                    }
+                },
+
+                isImageAnnotated(imageName) {
+                    return this.annotations.some(ann => ann.image_name === imageName);
+                },
+
+                getImageAnnotation(imageName) {
+                    return this.annotations.find(ann => ann.image_name === imageName);
+                },
+
+                handleFileSelect(event) {
+                    const files = Array.from(event.target.files);
+                    this.uploadFiles(files);
+                },
+
+                handleDrop(event) {
+                    const files = Array.from(event.dataTransfer.files);
+                    this.uploadFiles(files);
+                },
+
+                async uploadFiles(files) {
+                    if (files.length === 0) return;
+
+                    this.uploading = true;
+                    this.uploadProgress = 0;
+
+                    try {
+                        const formData = new FormData();
+                        files.forEach(file => {
+                            formData.append('files', file);
+                        });
+
+                        const response = await fetch('/api/upload-multiple', {
+                            method: 'POST',
+                            body: formData,
+                        });
+
+                        const results = await response.json();
+                        const successCount = results.filter(r => r.success).length;
+                        
+                        if (successCount > 0) {
+                            this.showToast('success', 'Upload Complete', `${successCount} photo(s) uploaded successfully`);
+                            await this.loadImages();
+                        }
+
+                        if (successCount < files.length) {
+                            this.showToast('error', 'Some uploads failed', 'Check file types and sizes');
+                        }
+
+                    } catch (error) {
+                        this.showToast('error', 'Upload Failed', 'Network error occurred');
+                    } finally {
+                        this.uploading = false;
+                        this.uploadProgress = 100;
+                        setTimeout(() => this.uploadProgress = 0, 1000);
+                    }
+                },
+
+                selectImage(image) {
+                    this.selectedImage = image;
+                    
+                    // Check if image has existing annotation and populate form
+                    const existingAnnotation = this.getImageAnnotation(image.filename);
+                    if (existingAnnotation) {
+                        this.annotation = {
+                            description: existingAnnotation.description || '',
+                            tags: existingAnnotation.tags || '',
+                            labels: existingAnnotation.labels || ''
+                        };
+                    } else {
+                        this.annotation = {
+                            description: '',
+                            tags: '',
+                            labels: ''
+                        };
+                    }
+                },
+
+                closeModal() {
+                    this.selectedImage = null;
+                    this.annotation = {
+                        description: '',
+                        tags: '',
+                        labels: ''
+                    };
+                },
+
+                async saveAnnotation() {
+                    if (!this.selectedImage || !this.annotation.description.trim()) {
+                        this.showToast('error', 'Validation Error', 'Description is required');
+                        return;
+                    }
+
+                    this.saving = true;
+                    try {
+                        const response = await fetch('/api/annotate', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                image_name: this.selectedImage.filename,
+                                description: this.annotation.description,
+                                tags: this.annotation.tags,
+                                labels: this.annotation.labels
+                            })
+                        });
+
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            this.showToast('success', 'Success', 'Annotation saved successfully');
+                            await this.loadAnnotations(); // Refresh annotations after saving
+                            this.closeModal();
+                        } else {
+                            this.showToast('error', 'Save Failed', result.message || 'Unknown error');
+                        }
+                    } catch (error) {
+                        this.showToast('error', 'Save Failed', 'Network error occurred');
+                    } finally {
+                        this.saving = false;
+                    }
+                },
+
+                async deleteImage(image) {
+                    if (!confirm(`Are you sure you want to delete "${image.filename}"? This will also remove all annotations for this image.`)) {
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(`/api/images/${encodeURIComponent(image.filename)}`, {
+                            method: 'DELETE'
+                        });
+
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            this.showToast('success', 'Image Deleted', `"${image.filename}" and its annotations have been deleted`);
+                            await this.loadImages(); // Refresh the image list
+                            
+                            // Close modal if the deleted image was selected
+                            if (this.selectedImage && this.selectedImage.filename === image.filename) {
+                                this.closeModal();
+                            }
+                        } else {
+                            this.showToast('error', 'Delete Failed', result.message || 'Could not delete image');
+                        }
+                    } catch (error) {
+                        this.showToast('error', 'Delete Failed', 'Network error occurred');
+                    }
+                },
+
+                async exportCSV() {
+                    try {
+                        const response = await fetch('/api/export');
+                        
+                        if (response.ok) {
+                            const blob = await response.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'annotations.csv';
+                            document.body.appendChild(a);
+                            a.click();
+                            window.URL.revokeObjectURL(url);
+                            document.body.removeChild(a);
+                            
+                            this.showToast('success', 'Export Complete', 'CSV file downloaded');
+                        } else {
+                            this.showToast('error', 'Export Failed', 'Could not export annotations');
+                        }
+                    } catch (error) {
+                        this.showToast('error', 'Export Failed', 'Network error occurred');
+                    }
+                },
+
+                showToast(type, title, message) {
+                    this.toast = {
+                        show: true,
+                        type,
+                        title,
+                        message
+                    };
+
+                    // Auto hide after 5 seconds
+                    setTimeout(() => {
+                        this.toast.show = false;
+                    }, 5000);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

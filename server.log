@@ -1,0 +1,105 @@
+INFO:     Will watch for changes in these directories: ['/Users/furkankucuk/Documents/projects/aldebaran/photo-annotation-tool']
+INFO:     Uvicorn running on http://127.0.0.1:8002 (Press CTRL+C to quit)
+INFO:     Started reloader process [97114] using WatchFiles
+INFO:     Started server process [97116]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:58845 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58845 - "GET /api/images HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58846 - "GET /uploads/undefined HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58846 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58849 - "GET /health HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'create_test_images.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [97116]
+INFO:     Started server process [97572]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:58863 - "GET /api/images HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58864 - "GET /uploads/undefined HTTP/1.1" 404 Not Found
+/Users/furkankucuk/Documents/projects/aldebaran/photo-annotation-tool/src/photo_annotator/services/file_handler.py:61: RuntimeWarning: coroutine 'UploadFile.read' was never awaited
+  result = self.upload_single_file(file)
+RuntimeWarning: Enable tracemalloc to get the object allocation traceback
+INFO:     127.0.0.1:58865 - "POST /api/upload-multiple HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58866 - "GET /api/images HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58867 - "GET /uploads/red_image.jpg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58871 - "POST /api/annotate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58871 - "GET /uploads/undefined HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58874 - "GET /uploads/green_image.jpg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58875 - "POST /api/annotate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58875 - "GET /uploads/undefined HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58876 - "GET /api/export HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'create_test_images.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [97572]
+INFO:     Started server process [99041]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/photo_annotator/services/file_handler.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [99041]
+INFO:     Started server process [28688]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/photo_annotator/services/file_handler.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [28688]
+INFO:     Started server process [29223]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/photo_annotator/services/file_handler.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [29223]
+INFO:     Started server process [29291]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/photo_annotator/services/file_handler.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [29291]
+INFO:     Started server process [29420]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/photo_annotator/api/routes.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [29420]
+INFO:     Started server process [29516]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/photo_annotator/api/routes.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [29516]
+INFO:     Started server process [29580]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/photo_annotator/services/csv_service.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [29580]
+INFO:     Started server process [37803]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'src/photo_annotator/api/routes.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [37803]
+INFO:     Started server process [37938]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.

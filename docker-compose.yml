@@ -1,0 +1,27 @@
+# version: '3.8' # Deprecated
+
+services:
+  photo-annotator:
+    build: .
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./annotations.csv:/app/annotations.csv
+    networks:
+      - proxy-net
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  # Define 'proxy-net' as an existing, external network.
+  # Docker Compose will not create it, but expect it to be present.
+  proxy-net:
+    external: true
